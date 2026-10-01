@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body style="background-color: #f8f9fa; padding: 20px;">
+    <div style="max-width: 950px; margin: 30px auto; background: white; padding: 25px; border-radius: 12px; border: 1px solid #ccc; font-family: Arial, sans-serif;">
+        <h2 style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px;">🔒 Mirha Qureshi - Screenshot Approval Dashboard</h2>
+        <div id="requestList" style="margin-top:20px; overflow-x:auto;">
+            <p style="text-align:center; font-weight:bold;">Loading payment requests...</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Loading -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+    <script>
+        // Connected Database Config
+        const firebaseConfig = {
+          apiKey: "AIzaSyA8f5b0G0LrlpkrXtkRTa4jCmW68N3M9j8",
+          authDomain: "://firebaseapp.com",
+          databaseURL: "https://firebaseio.com",
+          projectId: "mirha-portfolio-db",
+          storageBucket: "://appspot.com",
+          messagingSenderId: "330339147878",
+          appId: "1:330339147878:web:d8a8d2c140564c9add0da7"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const database = firebase.database();
+
+        // Real-time listener to fetch and view screenshot proofs
+        database.ref('requests').on('value', snapshot => {
+            const listDiv = document.getElementById('requestList'); listDiv.innerHTML = "";
+            const data = snapshot.val();
+            if(!data) { listDiv.innerHTML = "<p style='text-align:center; color:#777;'>No verification requests pending.</p>"; return; }
+            
+            let tableHtml = `<table border="1" cellpadding="10" style="width:100%; border-collapse:collapse; text-align:left; font-size:14px;"><tr style="background:#f4f4f4;"><th>Tracking ID</th><th>User Name</th><th>Asli Screenshot Proof</th><th>Status</th><th>Action</th></tr>`;
+            
+            Object.keys(data).forEach(id => {
+                const req = data[id]; const statusBg = req.status === "Approved" ? "#d4edda" : "#fff3cd";
+                const imgTag = req.screenshot ? `<img src="${req.screenshot}" style="max-width:140px; max-height:180px; border-radius:6px; border:1px solid #ddd; cursor:pointer;" onclick="window.open('${req.screenshot}')" title='Click to view full screenshot'>` : 'No Image';
+                
+                tableHtml += `<tr>
+                    <td><strong>${id}</strong></td><td>${req.name}</td><td>${imgTag}</td>
+                    <td style="background:${statusBg}; font-weight:bold;">${req.status}</td>
+                    <td>${req.status === "Pending" ? `<button onclick="updateStatus('\${id}', 'Approved')" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px; font-weight:bold; cursor:pointer;">Approve ✓</button>` : `<button onclick="updateStatus('\${id}', 'Pending')" style="background:#dc3545; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer;">Revoke ✕</button>`}</td>
+                </tr>`;
+            });
+            tableHtml += `</table>`; listDiv.innerHTML = tableHtml;
+        });
+
+        // Toggle Status function
+        function updateStatus(trackId, newStatus) { database.ref('requests/' + trackId).update({ status: newStatus }); }
+    </script>
+</body>
+</html>
