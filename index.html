@@ -34,7 +34,6 @@
     <header>
         <h1>Mirha Qureshi</h1>
         <p>Official Creative Content Creator & Stylist</p>
-        <!-- Fixed Bulletproof Click Action -->
         <button class="chat-btn" onclick="document.getElementById('paymentModal').style.display = 'flex';">Contact for Personal Chat</button>
     </header>
 
@@ -111,7 +110,8 @@
         const database = firebase.database();
 
         document.getElementById('paymentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+            e.preventDefault(); // Sab se pehle form standard submission block krein
+            
             const submitBtn = document.getElementById('submitRequestBtn');
             submitBtn.disabled = true; submitBtn.innerText = "Uploading Screenshot...";
             
@@ -119,9 +119,11 @@
             const fileInput = document.getElementById('custProofFile');
             const trackId = "MQ-" + Math.floor(10000 + Math.random() * 90000);
             
-            if(fileInput.files.length > 0) {
-                const file = fileInput.files[0];
+            // BUG FIX: .files[0] ensures single image is selected properly
+            if(fileInput.files && fileInput.files[0]) {
+                const singleFile = fileInput.files[0];
                 const reader = new FileReader();
+                
                 reader.onloadend = function() {
                     database.ref('requests/' + trackId).set({
                         name: name,
@@ -134,9 +136,16 @@
                         document.getElementById('displayTrackId').innerText = trackId;
                         document.getElementById('searchTrackId').value = trackId;
                         document.getElementById('trackingSection').style.display = 'block';
+                    }).catch(err => {
+                        alert("Database Upload Error: " + err.message);
+                        submitBtn.disabled = false; submitBtn.innerText = "Submit Screenshot";
                     });
                 };
-                reader.readAsDataURL(file);
+                
+                reader.readAsDataURL(singleFile);
+            } else {
+                alert("Please pick a valid picture file.");
+                submitBtn.disabled = false; submitBtn.innerText = "Submit Screenshot";
             }
         });
 
@@ -144,12 +153,3 @@
             const trackId = document.getElementById('searchTrackId').value.trim();
             if(!trackId) return alert("Please enter Tracking ID");
             
-            database.ref('requests/' + trackId).once('value', snapshot => {
-                const data = snapshot.val();
-                const resultBox = document.getElementById('statusResultBox');
-                const statusText = document.getElementById('currentStatusText');
-                const linkBox = document.getElementById('downloadLinkBox');
-                const finalLink = document.getElementById('finalDownloadLink');
-                
-                resultBox.style.display = "block";
-        
